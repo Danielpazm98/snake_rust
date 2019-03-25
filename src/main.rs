@@ -9,7 +9,7 @@ use piston::input::*;
 use glutin_window::GlutinWindow;
 use opengl_graphics::{GlGraphics, OpenGL};
 
-extern crate rand;
+use rand::Rng;
 
 use std::collections::LinkedList;
 use std::iter::FromIterator;
@@ -20,15 +20,15 @@ struct Game
 {
     gl: GlGraphics,
 
-    rows: u32,
-    cols: u32,
+    //rows: u32,
+    //cols: u32,
 
     snake: Snake,
-    just_eaten: bool,
+    //just_eaten: bool,
 
     food: Food,
 
-    score: u32,
+    //score: u32,
 }
 
 
@@ -155,13 +155,21 @@ struct Food
 impl Food
 {
 
+    fn render(&self, gl: &mut GlGraphics, args: &RenderArgs){
+
+        
+        let IDK: [f32; 4] = [1.0, 1.0, 0.0, 0.0];
+  
+        let square: graphics::rectangle::square(
+            (self.pos_x * 20) as f64,
+            (self.pos_y * 20) as f64,
+            20_f64);
+                
 
 
 
 
-
-
-
+    }
 
 }
 
@@ -186,6 +194,16 @@ fn main() {
             body: LinkedList::from_iter((vec![(0,0), (0,1)]).into_iter()),
             dir: Direction::Right
         },
+
+
+        food: Food {
+            let n1 = rand::thread_rng().gen_range(1, 32);
+            pos_x = nums;
+            
+            let n2 = rand::thread_rng().gen_range(1, 32);
+            pos_y = n2;
+
+        }
     };
 
 
