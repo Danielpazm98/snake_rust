@@ -3,6 +3,7 @@ extern crate graphics;
 extern crate glutin_window;
 extern crate opengl_graphics;
 
+
 use piston::window::WindowSettings;
 use piston::event_loop::*;
 use piston::input::*;
@@ -15,13 +16,12 @@ use std::collections::LinkedList;
 use std::iter::FromIterator;
 
 
-
 struct Game 
 {
     gl: GlGraphics,
 
-    //rows: u32,
-    //cols: u32,
+    rows: i32,
+    cols: i32,
 
     snake: Snake,
     //just_eaten: bool,
@@ -43,13 +43,19 @@ impl Game
             graphics::clear(GREEN, gl);
         });
 
+        self.food.render(&mut self.gl, arg);
         self.snake.render(&mut self.gl, arg);
+        
     }
 
 
-    fn update(&mut self){
+    fn update(&mut self, arg: &UpdateArgs){
         self.snake.update();
-
+        
+        if &self.snake.head == &self.food.pos {
+           self.snake.grow();
+           self.food.update(&mut self.gl, arg);
+        }   
     }
 
 
@@ -70,8 +76,29 @@ impl Game
             _ => last_direction
         };
     
+    }
+
+    fn die(&mut self) -> bool{
+
+    
+        if (&self.snake.head.0 >= &self.cols) || (&self.snake.head.0 < &0) || (&self.snake.head.1 >= &self.rows) || (&self.snake.head.1 < &0) {
+            println!("has muerto");
+            return true;
+        }
+
+        for element in self.snake.body.iter() {
+            
+            if element == &self.snake.head { 
+                return true;
+            }
+
+        }
+
+    return false;
 
     }
+
+    
 }
 
 
@@ -85,7 +112,9 @@ enum Direction
 
 struct Snake
 {
+
     body: LinkedList<(i32, i32)>,
+    head: (i32,i32),
     
     dir: Direction
 
@@ -122,22 +151,45 @@ impl Snake
 
                 }
 
-    fn update(&mut self) {
+    fn update(&mut self){
        
-        let mut new_head = (*self.body.front().expect("Snake has no body!")).clone();
-        
+        let mut new_head = (self.head).clone();
+
+        //self.head = (*self.body.front().expect("Snake has no body 2!")).clone();
             
         match self.dir {
-            Direction::Left =>  new_head.0 -= 1,
-            Direction::Right => new_head.0 += 1,
-            Direction::Up =>    new_head.1 -= 1,
-            Direction::Down =>  new_head.1 += 1,
+            Direction::Left =>  new_head.0 = self.head.0 - 1,
+            Direction::Right => new_head.0 = self.head.0 + 1,
+            Direction::Up =>    new_head.1 = self.head.1 - 1,
+            Direction::Down =>  new_head.1 = self.head.1 + 1,
         }
 
-
-        self.body.push_front(new_head);
+        self.body.push_front(self.head);
+        
+        self.head = new_head;
 
         self.body.pop_back().unwrap();
+
+    }
+
+
+    fn grow(&mut self){
+
+      let mut new_head = (self.head).clone();
+
+        //self.head = (*self.body.front().expect("Snake has no body 2!")).clone();
+            
+        match self.dir {
+            Direction::Left =>  new_head.0 = self.head.0 - 1,
+            Direction::Right => new_head.0 = self.head.0 + 1,
+            Direction::Up =>    new_head.1 = self.head.1 - 1,
+            Direction::Down =>  new_head.1 = self.head.1 + 1,
+        }
+
+        self.body.push_front(self.head);
+        
+        self.head = new_head;
+
     }
 
 }
@@ -146,8 +198,7 @@ impl Snake
 
 struct Food
 {
-    pos_x: i32,
-    pos_y: i32
+    pos: (i32, i32)    
 }
 
 
@@ -156,18 +207,31 @@ impl Food
 {
 
     fn render(&self, gl: &mut GlGraphics, args: &RenderArgs){
-
+        use graphics;
         
-        let IDK: [f32; 4] = [1.0, 1.0, 0.0, 0.0];
+        let IDK: [f32; 4] = [1.0, 1.0, 1.0, 1.0];
   
-        let square: graphics::rectangle::square(
-            (self.pos_x * 20) as f64,
-            (self.pos_y * 20) as f64,
+        let square = graphics::rectangle::square(
+            (self.pos.0 * 20) as f64,
+            (self.pos.1 * 20) as f64,
             20_f64);
-                
 
 
+        gl.draw(args.viewport(), |c_,gl| {
+            let transform = c_.transform;
 
+            graphics::rectangle(IDK, square, transform, gl);
+        });
+     }
+
+    fn update(&mut self, gl: &mut GlGraphics, args: &UpdateArgs){
+
+        let n1: i32 = rand::thread_rng().gen_range(1, 10);
+        let n2: i32 = rand::thread_rng().gen_range(1, 10);
+        self.pos.0 = n1;
+        self.pos.1 = n2;
+        
+        println!("comida++");
 
     }
 
@@ -177,6 +241,13 @@ impl Food
 fn main() {
 
     let opengl = OpenGL::V3_2;
+
+    let n1: i32 = rand::thread_rng().gen_range(1, 10);
+    let n2: i32 = rand::thread_rng().gen_range(1, 10);
+   
+
+    println!("N1: {} N2: {}", n1, n2);
+
 
     let mut window: GlutinWindow = WindowSettings::new(
             "snake game",
@@ -188,27 +259,26 @@ fn main() {
 
     let mut game = Game {
         
+        cols: 10,
+        rows: 10,
+
         gl: GlGraphics::new(opengl),
 
         snake: Snake { 
             body: LinkedList::from_iter((vec![(0,0), (0,1)]).into_iter()),
-            dir: Direction::Right
+            dir: Direction::Right,
+            head: (0,2),
         },
 
 
         food: Food {
-            let n1 = rand::thread_rng().gen_range(1, 32);
-            pos_x = nums;
-            
-            let n2 = rand::thread_rng().gen_range(1, 32);
-            pos_y = n2;
-
+            pos: (n1, n2),
         }
     };
 
 
 
-    let mut events = Events::new(EventSettings::new()).ups(8);
+    let mut events = Events::new(EventSettings::new()).ups(5);
     while let Some(e) = events.next(&mut window) {
 
         if let Some(r) = e.render_args() {
@@ -216,7 +286,7 @@ fn main() {
         }
 
         if let Some(u) = e.update_args() {
-            game.update();
+            game.update(&u);
 
         }
 
@@ -226,6 +296,11 @@ fn main() {
             }
         }
 
+        if let Some(d) = e.update_args() {
+            if game.die() {
+                break;       
+            }
+        }
 
     }
 }
